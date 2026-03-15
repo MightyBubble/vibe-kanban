@@ -17,6 +17,7 @@ import { create, useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/shared/lib/modals';
 
 import { cn } from '@/shared/lib/utils';
+import { hasRemoteApi } from '@/shared/lib/remoteApi';
 import { SettingsSection } from './settings/SettingsSection';
 import type {
   SettingsSectionType,
@@ -62,17 +63,27 @@ function SettingsDialogContent({
 }: SettingsDialogContentProps) {
   const { t } = useTranslation('settings');
   const { isDirty } = useSettingsDirty();
+  const remoteEnabled = hasRemoteApi();
   const availableSections = useMemo(() => {
+    const defaultSections = remoteEnabled
+      ? SETTINGS_SECTIONS
+      : SETTINGS_SECTIONS.filter(
+          (section) =>
+            section.id !== 'organizations' &&
+            section.id !== 'remote-projects' &&
+            section.id !== 'relay'
+        );
+
     if (!sections || sections.length === 0) {
-      return SETTINGS_SECTIONS;
+      return defaultSections;
     }
 
     const allowed = new Set(sections);
-    const filtered = SETTINGS_SECTIONS.filter((section) =>
+    const filtered = defaultSections.filter((section) =>
       allowed.has(section.id)
     );
-    return filtered.length > 0 ? filtered : SETTINGS_SECTIONS;
-  }, [sections]);
+    return filtered.length > 0 ? filtered : defaultSections;
+  }, [remoteEnabled, sections]);
 
   const resolvedInitialSection = useMemo<SettingsSectionType>(() => {
     if (

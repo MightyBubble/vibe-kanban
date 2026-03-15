@@ -36,6 +36,7 @@ import { SettingsDialog } from '@/shared/dialogs/settings/SettingsDialog';
 import { getProjectDestination } from '@/shared/lib/routes/appNavigation';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
 import { useCurrentAppDestination } from '@/shared/hooks/useCurrentAppDestination';
+import { hasRemoteApi } from '@/shared/lib/remoteApi';
 
 /**
  * Check if a NavbarItem is a divider
@@ -136,6 +137,7 @@ export function NavbarContainer({
   const isOnProjectSubRoute =
     projectDestination !== null && projectDestination.kind !== 'project';
   const [mobileActiveTab, setMobileActiveTab] = useMobileActiveTab();
+  const remoteEnabled = hasRemoteApi();
 
   // Find remote workspace linked to current local workspace
   const linkedRemoteWorkspace = useMemo(() => {
@@ -205,7 +207,11 @@ export function NavbarContainer({
   const linkedProjectId = linkedRemoteWorkspace?.project_id ?? null;
   const linkedIssueId = linkedRemoteWorkspace?.issue_id ?? null;
   const shouldResolveBreadcrumbData =
-    !isOnProjectPage && !isCreateMode && !isMigratePage && !!linkedProjectId;
+    remoteEnabled &&
+    !isOnProjectPage &&
+    !isCreateMode &&
+    !isMigratePage &&
+    !!linkedProjectId;
   const shouldResolveIssueBreadcrumb =
     shouldResolveBreadcrumbData && !!linkedIssueId;
 
@@ -303,7 +309,7 @@ export function NavbarContainer({
 
   // Build user popover slot for mobile mode
   const userPopoverSlot = useMemo(() => {
-    if (!mobileMode) return undefined;
+    if (!mobileMode || !remoteEnabled) return undefined;
     return (
       <AppBarUserPopoverContainer
         organizations={orgsData?.organizations ?? []}
@@ -314,6 +320,7 @@ export function NavbarContainer({
     );
   }, [
     mobileMode,
+    remoteEnabled,
     orgsData?.organizations,
     selectedOrgId,
     onCreateOrg,
@@ -340,6 +347,7 @@ export function NavbarContainer({
       leftSlot={
         !breadcrumbs &&
         !isWaitingForBreadcrumbData &&
+        remoteEnabled &&
         linkedRemoteWorkspace?.issue_id ? (
           <RemoteIssueLink
             projectId={linkedRemoteWorkspace.project_id}

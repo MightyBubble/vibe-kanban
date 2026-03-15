@@ -146,6 +146,7 @@ export interface ActionVisibilityContext {
   isCreatingIssue: boolean;
 
   // Auth state
+  hasRemoteApi: boolean;
   isSignedIn: boolean;
 }
 

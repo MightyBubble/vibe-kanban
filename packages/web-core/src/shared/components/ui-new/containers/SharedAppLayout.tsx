@@ -48,6 +48,7 @@ import {
 import { AppBarNotificationBellContainer } from '@/pages/workspaces/AppBarNotificationBellContainer';
 import { WorkspacesSidebarContainer } from '@/pages/workspaces/WorkspacesSidebarContainer';
 import { WorkspacesSidebarReopenTag } from '@vibe/ui/components/WorkspacesSidebar';
+import { hasRemoteApi } from '@/shared/lib/remoteApi';
 
 export function SharedAppLayout() {
   const appNavigation = useAppNavigation();
@@ -58,6 +59,7 @@ export function SharedAppLayout() {
   const isLeftSidebarVisible = useUiPreferencesStore(
     (s) => s.isLeftSidebarVisible
   );
+  const remoteEnabled = hasRemoteApi();
   const { isSignedIn } = useAuth();
   const { appVersion } = useUserSystem();
   const updateVersion = useAppUpdateStore((s) => s.updateVersion);
@@ -120,7 +122,7 @@ export function SharedAppLayout() {
     isLoading,
     updateMany: updateManyProjects,
   } = useShape(PROJECTS_SHAPE, projectParams, {
-    enabled: isSignedIn && !!selectedOrgId,
+    enabled: remoteEnabled && isSignedIn && !!selectedOrgId,
     mutation: PROJECT_MUTATION,
   });
   const sortedProjects = useMemo(
@@ -315,7 +317,7 @@ export function SharedAppLayout() {
             />
             {/* Row 2, col 1: AppBar sidebar */}
             <AppBar
-              projects={orderedProjects}
+              projects={remoteEnabled ? orderedProjects : []}
               onCreateProject={handleCreateProject}
               onWorkspacesClick={handleWorkspacesClick}
               onProjectClick={handleProjectClick}
@@ -323,22 +325,27 @@ export function SharedAppLayout() {
               isSavingProjectOrder={isSavingProjectOrder}
               isWorkspacesActive={isWorkspacesActive}
               activeProjectId={activeProjectId}
-              isSignedIn={isSignedIn}
-              isLoadingProjects={isLoading}
+              showRemoteEntryPoints={remoteEnabled}
+              isSignedIn={remoteEnabled && isSignedIn}
+              isLoadingProjects={remoteEnabled ? isLoading : false}
               onSignIn={handleSignIn}
               onMigrate={handleMigrate}
               onHoverStart={() => setIsAppBarHovered(true)}
               onHoverEnd={() => setIsAppBarHovered(false)}
               notificationBell={
-                isSignedIn ? <AppBarNotificationBellContainer /> : undefined
+                remoteEnabled && isSignedIn
+                  ? <AppBarNotificationBellContainer />
+                  : undefined
               }
               userPopover={
-                <AppBarUserPopoverContainer
-                  organizations={organizations}
-                  selectedOrgId={selectedOrgId ?? ''}
-                  onOrgSelect={setSelectedOrgId}
-                  onCreateOrg={handleCreateOrg}
-                />
+                remoteEnabled ? (
+                  <AppBarUserPopoverContainer
+                    organizations={organizations}
+                    selectedOrgId={selectedOrgId ?? ''}
+                    onOrgSelect={setSelectedOrgId}
+                    onCreateOrg={handleCreateOrg}
+                  />
+                ) : undefined
               }
               starCount={starCount}
               onlineCount={onlineCount}
@@ -406,8 +413,10 @@ export function SharedAppLayout() {
             {/* Header: org name + close button */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <span className="text-sm font-medium text-high truncate">
-                {organizations.find((o) => o.id === selectedOrgId)?.name ??
-                  'Organization'}
+                {remoteEnabled
+                  ? (organizations.find((o) => o.id === selectedOrgId)?.name ??
+                    'Organization')
+                  : 'Local Mode'}
               </span>
               <button
                 type="button"
@@ -436,70 +445,72 @@ export function SharedAppLayout() {
 
             {/* Project list */}
             <div className="flex-1 overflow-y-auto p-2">
-              {isSignedIn ? (
-                orderedProjects.map((project) => (
-                  <button
-                    type="button"
-                    key={project.id}
-                    onClick={() => {
-                      handleProjectClick(project.id);
-                      setIsDrawerOpen(false);
-                    }}
-                    className={cn(
-                      'flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm text-left cursor-pointer',
-                      'transition-colors',
-                      project.id === activeProjectId
-                        ? 'bg-brand/10 text-high'
-                        : 'text-normal hover:bg-secondary'
-                    )}
-                  >
-                    <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: `hsl(${project.color})` }}
-                    />
-                    <span className="truncate">{project.name}</span>
-                  </button>
-                ))
-              ) : (
-                <div className="px-4 py-6 text-center">
-                  <KanbanIcon
-                    className="h-8 w-8 mx-auto text-low"
-                    weight="bold"
-                  />
-                  <p className="mt-3 text-sm font-medium text-high">
-                    Kanban Boards
-                  </p>
-                  <p className="mt-1 text-xs text-low">
-                    Sign in to organise your coding agents with kanban boards.
-                  </p>
-                  <div className="mt-4 flex flex-col gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleSignIn();
-                        setIsDrawerOpen(false);
-                      }}
-                      className="w-full px-3 py-2 rounded-md text-sm font-medium bg-brand text-on-brand hover:bg-brand-hover cursor-pointer"
-                    >
-                      Sign in
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleMigrate();
-                        setIsDrawerOpen(false);
-                      }}
-                      className="w-full px-3 py-2 rounded-md text-sm text-normal bg-secondary hover:bg-panel border border-border cursor-pointer"
-                    >
-                      Migrate old projects
-                    </button>
-                  </div>
-                </div>
-              )}
+              {remoteEnabled
+                ? isSignedIn
+                  ? orderedProjects.map((project) => (
+                      <button
+                        type="button"
+                        key={project.id}
+                        onClick={() => {
+                          handleProjectClick(project.id);
+                          setIsDrawerOpen(false);
+                        }}
+                        className={cn(
+                          'flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-sm text-left cursor-pointer',
+                          'transition-colors',
+                          project.id === activeProjectId
+                            ? 'bg-brand/10 text-high'
+                            : 'text-normal hover:bg-secondary'
+                        )}
+                      >
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: `hsl(${project.color})` }}
+                        />
+                        <span className="truncate">{project.name}</span>
+                      </button>
+                    ))
+                  : (
+                      <div className="px-4 py-6 text-center">
+                        <KanbanIcon
+                          className="h-8 w-8 mx-auto text-low"
+                          weight="bold"
+                        />
+                        <p className="mt-3 text-sm font-medium text-high">
+                          Kanban Boards
+                        </p>
+                        <p className="mt-1 text-xs text-low">
+                          Sign in to organise your coding agents with kanban boards.
+                        </p>
+                        <div className="mt-4 flex flex-col gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleSignIn();
+                              setIsDrawerOpen(false);
+                            }}
+                            className="w-full px-3 py-2 rounded-md text-sm font-medium bg-brand text-on-brand hover:bg-brand-hover cursor-pointer"
+                          >
+                            Sign in
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleMigrate();
+                              setIsDrawerOpen(false);
+                            }}
+                            className="w-full px-3 py-2 rounded-md text-sm text-normal bg-secondary hover:bg-panel border border-border cursor-pointer"
+                          >
+                            Migrate old projects
+                          </button>
+                        </div>
+                      </div>
+                    )
+                : null}
             </div>
 
             {/* Create Project button */}
-            {isSignedIn && (
+            {remoteEnabled && isSignedIn && (
               <div className="p-3 border-t border-border">
                 <button
                   type="button"

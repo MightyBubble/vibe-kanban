@@ -42,6 +42,10 @@ export function getRemoteApiUrl(): string {
   return _remoteApiBase;
 }
 
+export function hasRemoteApi(): boolean {
+  return getRemoteApiUrl().trim().length > 0;
+}
+
 // Backward-compatible export — consumers should migrate to getRemoteApiUrl()
 export const REMOTE_API_URL = BUILD_TIME_API_BASE;
 

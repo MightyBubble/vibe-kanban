@@ -4,11 +4,13 @@ import { getFirstProjectDestination } from '@/shared/lib/firstProjectDestination
 import { useOrganizationStore } from '@/shared/stores/useOrganizationStore';
 import { useUiPreferencesStore } from '@/shared/stores/useUiPreferencesStore';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
+import { hasRemoteApi } from '@/shared/lib/remoteApi';
 
 export function RootRedirectPage() {
   const { config, loading, loginStatus } = useUserSystem();
   const setSelectedOrgId = useOrganizationStore((s) => s.setSelectedOrgId);
   const appNavigation = useAppNavigation();
+  const remoteEnabled = hasRemoteApi();
 
   useEffect(() => {
     if (loading || !config) {
@@ -17,6 +19,11 @@ export function RootRedirectPage() {
 
     let isActive = true;
     void (async () => {
+      if (!remoteEnabled) {
+        appNavigation.goToWorkspacesCreate({ replace: true });
+        return;
+      }
+
       if (!config.remote_onboarding_acknowledged) {
         appNavigation.goToOnboarding({ replace: true });
         return;
@@ -52,7 +59,14 @@ export function RootRedirectPage() {
     return () => {
       isActive = false;
     };
-  }, [appNavigation, config, loading, loginStatus?.status, setSelectedOrgId]);
+  }, [
+    appNavigation,
+    config,
+    remoteEnabled,
+    loading,
+    loginStatus?.status,
+    setSelectedOrgId,
+  ]);
 
   return (
     <div className="h-screen bg-primary flex items-center justify-center">

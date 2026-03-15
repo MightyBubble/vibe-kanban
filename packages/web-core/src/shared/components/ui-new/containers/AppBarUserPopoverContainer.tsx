@@ -7,6 +7,7 @@ import { useUserSystem } from '@/shared/hooks/useUserSystem';
 import { useOrganizationStore } from '@/shared/stores/useOrganizationStore';
 import { useActions } from '@/shared/hooks/useActions';
 import { Actions } from '@/shared/actions';
+import { hasRemoteApi } from '@/shared/lib/remoteApi';
 
 interface AppBarUserPopoverContainerProps {
   organizations: OrganizationWithRole[];
@@ -27,6 +28,7 @@ export function AppBarUserPopoverContainer({
   const setSelectedOrgId = useOrganizationStore((s) => s.setSelectedOrgId);
   const [open, setOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const remoteEnabled = hasRemoteApi();
 
   // Extract avatar URL from first provider
   const avatarUrl =
@@ -51,6 +53,10 @@ export function AppBarUserPopoverContainer({
     setOpen(false);
     await SettingsDialog.show();
   };
+
+  if (!remoteEnabled) {
+    return null;
+  }
 
   return (
     <AppBarUserPopover

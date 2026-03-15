@@ -427,7 +427,7 @@ export const Actions = {
     label: 'Project Settings',
     icon: GearIcon,
     requiresTarget: ActionTargetType.NONE,
-    isVisible: (ctx) => ctx.layoutMode === 'kanban',
+    isVisible: (ctx) => ctx.hasRemoteApi && ctx.layoutMode === 'kanban',
     execute: async (ctx) => {
       await SettingsDialog.show({
         initialSection: 'remote-projects',
@@ -444,7 +444,7 @@ export const Actions = {
     label: 'Sign In',
     icon: SignInIcon,
     requiresTarget: ActionTargetType.NONE,
-    isVisible: (ctx) => !ctx.isSignedIn,
+    isVisible: (ctx) => ctx.hasRemoteApi && !ctx.isSignedIn,
     execute: async () => {
       const { OAuthDialog } = await import(
         '@/shared/dialogs/global/OAuthDialog'
@@ -458,7 +458,7 @@ export const Actions = {
     label: 'Sign Out',
     icon: SignOutIcon,
     requiresTarget: ActionTargetType.NONE,
-    isVisible: (ctx) => ctx.isSignedIn,
+    isVisible: (ctx) => ctx.hasRemoteApi && ctx.isSignedIn,
     execute: async (ctx) => {
       const { oauthApi } = await import('@/shared/lib/api');
       const { useOrganizationStore } = await import(

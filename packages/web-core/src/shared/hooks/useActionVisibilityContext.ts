@@ -20,6 +20,7 @@ import { useAuth } from '@/shared/hooks/auth/useAuth';
 import { isProjectDestination } from '@/shared/lib/routes/appNavigation';
 import { useCurrentAppDestination } from '@/shared/hooks/useCurrentAppDestination';
 import { useCurrentKanbanRouteState } from '@/shared/hooks/useCurrentKanbanRouteState';
+import { hasRemoteApi } from '@/shared/lib/remoteApi';
 import { PROJECT_ISSUES_SHAPE } from 'shared/remote-types';
 import type { Merge } from 'shared/types';
 import type {
@@ -97,6 +98,7 @@ export function useActionVisibilityContext(
   const { isAttemptRunningVisible } = useExecutionProcessesContext();
   const { logsPanelContent } = useLogsPanel();
   const { isSignedIn } = useAuth();
+  const remoteEnabled = hasRemoteApi();
 
   return useMemo(() => {
     // Compute isAllDiffsExpanded
@@ -149,6 +151,7 @@ export function useActionVisibilityContext(
       hasSelectedKanbanIssue,
       hasSelectedKanbanIssueParent,
       isCreatingIssue: kanbanCreateMode,
+      hasRemoteApi: remoteEnabled,
       isSignedIn,
     };
   }, [
@@ -173,6 +176,7 @@ export function useActionVisibilityContext(
     hasSelectedKanbanIssue,
     hasSelectedKanbanIssueParent,
     kanbanCreateMode,
+    remoteEnabled,
     isSignedIn,
   ]);
 }
